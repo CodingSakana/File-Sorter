@@ -2,7 +2,8 @@
 set -euo pipefail
 
 # 获取当前绝对路径
-PROJECT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+PROJECT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." &> /dev/null && pwd )"
+
 BUILD_DIR="$PROJECT_DIR/build"
 BINARY="$BUILD_DIR/file_sorter"
 
@@ -107,6 +108,8 @@ EOF
 systemctl --user daemon-reload
 systemctl --user enable file-sorter.path
 systemctl --user restart file-sorter.path
+
+loginctl enable-linger $USER
 
 echo "------------------------------------------------------"
 echo "✅ 自动化监控已成功安装并启动！(基于 IO 锁防抖机制)"

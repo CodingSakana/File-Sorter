@@ -1,4 +1,4 @@
-source_dir: "/home/sssakana/pond/Pictures_Videos/inbox"
+source_dir: "/home/sssakana/pond/Pictures_Videos/Inbox"
 target_dir: "/home/sssakana/pond/Pictures_Videos"
 log_path: "/home/sssakana/pond/Pictures_Videos/.logs/file_sorter.log"
 geo_cache_path: "/home/sssakana/pond/Pictures_Videos/.runtime_data/geo_cache.json"

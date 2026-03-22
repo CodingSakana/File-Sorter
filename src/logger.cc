@@ -13,8 +13,12 @@ void Logger::init() {
     console_sink->set_pattern("[%^%l%$] %v"); // 简洁格式：[INFO] 消息内容
 
     // 2. 文件输出 Sink (级别：TRACE 及以上)，支持追加写入，存放在 config 指定目录下
+    // 使用 daily_file_sink，按天生成日志文件，不限制文件总数。
+    // 这可以永久保留所有历史日志，文件名会自动附加日期（如 file_sorter-2024-03-22.log）。
     std::string logFilePath = Config::getInstance().log_path;
-    auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(logFilePath, false);
+    // 参数：日志基础文件名，轮换时间（小时），轮换时间（分钟）。这里设置为每天 0 点 0 分。
+    auto file_sink = std::make_shared<spdlog::sinks::daily_file_sink_mt>(logFilePath, 0, 0);
+
     file_sink->set_level(spdlog::level::trace);
     // 详细格式：[时间] [级别] [线程ID] 消息内容
     file_sink->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%l] [thread %t] %v"); 

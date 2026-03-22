@@ -15,7 +15,9 @@ FileFormat Scanner::determineFormat(const fs::path& filePath) {
     std::transform(ext.begin(), ext.end(), ext.begin(),
                    [](unsigned char c) { return std::tolower(c); });
 
-    if (ext == ".jpg" || ext == ".jpeg" || ext == ".heic") {
+    // 将 PNG/HEIC 等常见非 RAW 图像格式与 JPEG 归为一类进行处理。
+    // 注意：这仅影响归档时的子目录（如 "JPEG"），并不保证它们含有与相机照片相同的 EXIF 元数据。
+    if (ext == ".jpg" || ext == ".jpeg" || ext == ".heic" || ext == ".png") {
         return FileFormat::JPEG;
     } else if (ext == ".arw" || ext == ".cr2" || ext == ".cr3" || 
                ext == ".nef" || ext == ".dng" || ext == ".raf") {

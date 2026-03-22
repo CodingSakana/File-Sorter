@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <iomanip>
 #include <sstream>
+#include <map>
 
 namespace file_sorter {
 
@@ -53,42 +54,28 @@ std::vector<EventGroup> EventCluster::clusterPhotos(std::vector<PhotoMetadata>& 
     if (photos.empty()) return groups;
 
     // 1. 按拍摄时间进行全局升序排序
+    // This ensures that when we iterate and group, photos within each group are already time-ordered.
     std::sort(photos.begin(), photos.end(), [](const PhotoMetadata& a, const PhotoMetadata& b) {
         return a.captureTime < b.captureTime;
     });
 
-    // 2. 遍历并分组
-    EventGroup currentGroup;
-    currentGroup.dateString = formatDate(photos[0].captureTime);
-    currentGroup.photos.push_back(photos[0]);
-
-    for (size_t i = 1; i < photos.size(); ++i) {
-        const auto& photo = photos[i];
-        std::string dateStr = formatDate(photo.captureTime);
-        
-        // 计算与上一张照片的时间差（秒）
-        auto timeDiff = std::chrono::duration_cast<std::chrono::seconds>(
-            photo.captureTime - photos[i-1].captureTime).count();
-
-        // 分组触发条件：日期发生改变，或者相邻两张照片拍摄间隔超过 4 小时 (14400 秒)
-        // 4小时阈值用于切分同一天内的早晚不同拍摄任务，或处理跨夜星空延时的断档
-        if (dateStr != currentGroup.dateString || timeDiff > 14400) {
-            // 组装当前组的最佳 GPS 坐标并入库
-            currentGroup.medianLocation = findBestLocation(currentGroup.photos);
-            groups.push_back(currentGroup);
-            
-            // 初始化新组
-            currentGroup = EventGroup{};
-            currentGroup.dateString = dateStr;
-        }
-        
-        currentGroup.photos.push_back(photo);
+    // 2. 使用 map 按日期严格分组，确保每天只有一个分组
+    std::map<std::string, std::vector<PhotoMetadata>> photosByDate;
+    for (const auto& photo : photos) {
+        photosByDate[formatDate(photo.captureTime)].push_back(photo);
     }
 
-    // 压入遍历结束时遗留的最后一个组
-    if (!currentGroup.photos.empty()) {
-        currentGroup.medianLocation = findBestLocation(currentGroup.photos);
-        groups.push_back(currentGroup);
+    // 3. 从 map 创建 EventGroup 列表
+    // 预分配空间以提高效率
+    groups.reserve(photosByDate.size());
+    for (auto const& [dateStr, datePhotos] : photosByDate) {
+        EventGroup group;
+        group.dateString = dateStr;
+        // 由于我们是按已排序的 `photos` 列表填充 map 的，
+        // `datePhotos` 内部的照片也保持了时间顺序。
+        group.photos = datePhotos;
+        group.medianLocation = findBestLocation(group.photos);
+        groups.push_back(std::move(group));
     }
 
     return groups;
